@@ -1,0 +1,78 @@
+# Bài tập 1. Viết chương trình nhập số nguyên n. Kiểm tra n có là số nguyên tố hay không ?
+# Problem: Write a MIPS program take an integer N as an input then check if N were a prime number ?
+# Pseudo-code
+# isPrimeNumber = false;
+# for (int = 2; i <= N/2; i++){
+# 	if(N % i){
+#		isPrimeNumber = true;
+#		break;
+#	}
+# }
+# return isPrimeNumber
+
+# N -> $s0
+# N/2 -> $s1
+# isPrimeNumber -> $s2
+# index i -> $t0
+# modolus value -> $t1
+
+.data 
+	tb1: .asciiz "Nhap vao so nguyen N / Input an integer N: "
+	tb2: .asciiz "\n==> N la so nguyen to. / N is a prime number."
+	tb3: .asciiz "\n==> N KHONG phai la so nguyen to. / N is NOT a prime number."
+.text
+
+# Xuat thong bao nhap vao so N / Print info tb1, prompt user to input an integer N
+li $v0 4
+la $a0 tb1
+syscall
+
+# Doc N tu nguoi dung nhap vao / Read integer N
+li $v0 5
+syscall
+
+# Luu N vao $s0 / Store N into $s0
+move $s0 $v0
+
+# Tinh toan gia tri N/2  / Calculate value of N/2
+li $t0 2
+# Neu N == 2 / if N == 2
+beq $s0 $t0 EXIT_LOOP
+div $s0 $t0
+# Luu gia tri N/2 vao $s1 / Store value of N/2 into $s1
+mflo $s1
+
+LOOP:
+# Tinh modulus cua N ($s0) % i ($t0) / Calculate N % i
+div $s0 $t0
+mfhi $t1
+
+beq $t1 $zero IF_MODULUS_ZERO
+addi $t0 $t0 1
+li $t1 0
+# Kiem tra i <= N/2  / Check if i <= N/2
+ble $t0 $s1 LOOP
+j EXIT_LOOP
+
+IF_MODULUS_ZERO:
+li $s2 1
+j EXIT_LOOP
+
+EXIT_LOOP:
+# Chuan bi xuat thong bao cuoi cung / Prepare to print if N were a prime number or not
+li $v0 4
+
+beq $s2 $zero PRINT_PRIME_NUMBER
+j PRINT_NOT_PRIME_NUMBER
+
+PRINT_NOT_PRIME_NUMBER:
+la $a0 tb3
+j END_PROGRAM
+
+PRINT_PRIME_NUMBER:
+la $a0 tb2
+
+END_PROGRAM:
+syscall
+
+
