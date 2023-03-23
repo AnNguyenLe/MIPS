@@ -1,0 +1,81 @@
+# Bài tập 2. Viết chương trình nhập số nguyên n. Kiểm tra n có là số nguyên hoàn thiện hay không ?
+# Problem: Write a MIPS program take an integer N as an input then check if N were a perfect number ?
+# Pseudo-code
+# isPerfectNumber = false;
+# sum = 0;
+# for (int = 1; i <= N/2; i++){
+# 	if(N % i){
+#		sum = sum + i;
+#	}
+# }
+# return sum === N
+
+# N -> $s0
+# N/2 -> $s1
+# sum -> $s2
+# index i -> $t0
+# modolus value -> $t1
+# const -> $t2 = 2
+
+.data 
+	tb1: .asciiz "Nhap vao so nguyen N / Input an integer N: "
+	tb2: .asciiz "\n==> N la so hoan thien. / N is a perfect number."
+	tb3: .asciiz "\n==> N KHONG phai la so hoan thien. / N is NOT a perfect number."
+.text
+
+# Xuat thong bao nhap vao so N / Print info tb1, prompt user to input an integer N
+li $v0 4
+la $a0 tb1
+syscall
+
+# Doc N tu nguoi dung nhap vao / Read integer N
+li $v0 5
+syscall
+
+# Luu N vao $s0 / Store N into $s0
+move $s0 $v0
+
+# Tinh toan gia tri N/2  / Calculate value of N/2
+li $t2 2
+div $s0 $t2
+# Luu gia tri N/2 vao $s1 / Store value of N/2 into $s1
+mflo $s1
+
+# Khoi tao gia tri ban dau cho index i ($t0) = 1
+li $t0 1
+
+LOOP:
+# Tinh modulus cua N ($s0) % i ($t0) / Calculate N % i
+div $s0 $t0
+mfhi $t1
+
+beq $t1 $zero IF_MODULUS_ZERO
+CONTINUE_LOOP:
+addi $t0 $t0 1
+li $t1 0
+# Kiem tra i <= N/2  / Check if i <= N/2
+ble $t0 $s1 LOOP
+j EXIT_LOOP
+
+IF_MODULUS_ZERO:
+add $s2 $s2 $t0
+j CONTINUE_LOOP
+
+EXIT_LOOP:
+# Chuan bi xuat thong bao cuoi cung / Prepare to print if N were a perfect number or not
+li $v0 4
+
+beq $s2 $s0 PRINT_PERFECT_NUMBER
+j PRINT_NOT_PERFECT_NUMBER
+
+PRINT_NOT_PERFECT_NUMBER:
+la $a0 tb3
+j END_PROGRAM
+
+PRINT_PERFECT_NUMBER:
+la $a0 tb2
+
+END_PROGRAM:
+syscall
+
+
