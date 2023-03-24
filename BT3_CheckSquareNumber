@@ -1,0 +1,76 @@
+# Bài tập 3. Viết chương trình nhập vào số nguyên n. Kiểm tra n có là số chính phương hay không ?
+# Problem: Write a MIPS program take an integer N as an input then check if N were a square number ?
+# isSquareNumber = false;
+# for (int i = 1; i < N; i++){
+#	const squareNumber  = i * i;
+#	if (squareNumber > N){
+#		break;
+#	}
+#	if (squareNumber === N){
+#		isSquareNumber = true
+#		break;
+#	} 
+# }
+# return isSquareNumber;
+
+# N -> $s0
+# isSquareNumber -> $s1
+# index i -> $t0
+# squareNumber -> $t1
+
+.data 
+	tb1: .asciiz "Nhap vao so nguyen N / Input an integer N: "
+	tb2: .asciiz "\n==> N la so chinh phuong. / N is a square number."
+	tb3: .asciiz "\n==> N KHONG phai la so chinh phuong. / N is NOT a square number."
+.text
+
+# Xuat thong bao nhap vao so N / Print info tb1, prompt user to input an integer N
+li $v0 4
+la $a0 tb1
+syscall
+
+# Doc N tu nguoi dung nhap vao / Read integer N
+li $v0 5
+syscall
+
+# Luu N vao $s0 / Store N into $s0
+move $s0 $v0
+
+# Khoi tao gia tri ban dau cho / Init value for index i ($t0) = 1
+li $t0 1
+
+LOOP:
+# Tinh binh phuong cua i ($t0) / Calculate square of i: $t1 = i * i
+mult $t0 $t0
+mflo $t1
+
+bgt $t1 $s0 EXIT_LOOP
+beq $t1 $s0 IF_SQUARE_INDEX_EQUALS_N
+
+# ++i
+addi $t0 $t0 1
+# Kiem tra i <= N  / Check if i <= N
+ble $t0 $s0 LOOP
+j EXIT_LOOP
+
+IF_SQUARE_INDEX_EQUALS_N:
+li $s1 1
+j EXIT_LOOP
+
+EXIT_LOOP:
+# Chuan bi xuat thong bao cuoi cung / Prepare to print if N were a perfect number or not
+li $v0 4
+
+beq $s1 $zero PRINT_NOT_SQUARE_NUMBER
+j PRINT_SQUARE_NUMBER
+
+PRINT_NOT_SQUARE_NUMBER:
+la $a0 tb3
+j END_PROGRAM
+
+PRINT_SQUARE_NUMBER:
+la $a0 tb2
+
+END_PROGRAM:
+syscall
+
