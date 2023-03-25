@@ -1,0 +1,407 @@
+#Bài tập 5. Sử dụng kỹ thuật Hàm, viết chương trình thực hiện các chức năng sau:
+#Problem: Using the technique of Function / Sub-routine, write a program provides the following functionalities:
+#1. Nhập mảng 1 chiều n phần tử số nguyên / Read an array consists n integers
+
+#2. Xuất mảng / Print the array
+
+#3. Liệt kê các số nguyên tố / List out the prime numbers if any
+
+#4. Tìm giá trị lớn nhất trong mảng / Find the max number
+
+#5. Tính trung bình mảng / Calculate the average of the array
+
+
+# Mapping:
+# n -> $s0
+# intArray's based address -> $s1
+
+# i -> $t0
+
+.data
+	tb1: .asciiz "Nhap mang co n phan tu so nguyen. / Creating an array consists n integers...\n"
+	inputInteger: .asciiz "Nhap vao so nguyen n / Input an integer n: "
+	inputArrayElementOpen: .asciiz "a["
+	inputArrayElementClose: .asciiz "] = "
+	printArrayElementOpen: .asciiz "Mang ban da tao la / The array you created: [ "
+	printArrayElementClose: .asciiz "]\n"
+	printPrimeNumbersOpen: .asciiz "Cac so nguyen to co trong mang / Element(s) that is/are prime number(s): [ "
+	printMax: .asciiz "So lon nhat trong mang / Max value: "
+	printAverage: .asciiz "Trung binh cong mang/ Average value: "
+	whiteSpace: .asciiz " "
+	lineBreak: .asciiz "\n"
+	plusSign: .asciiz " + "
+	divideSign: .asciiz "/"
+	intArray: .word 0
+.text
+
+
+
+# Xuat thong bao 1 / Print tb1
+li $v0, 4
+la $a0, tb1
+syscall
+
+# Xuat thong bao 2 / Print tb2
+li $v0, 4
+la $a0, inputInteger
+syscall
+
+# Doc gia tri n nhan đuoc tu nguoi dung / Read n input by user:
+li $v0, 5
+syscall
+
+# Luu n vao $s0 / Store n to $s0
+move $s0, $v0
+
+# Gan dia chi cua mang intArray vo $s1 / Assign the intArray's based address to $s1
+la $s1 intArray
+
+# Sub-routine 
+# Truyen tham so vao $a1
+move $a1 $s0
+
+# Call subroutine AddElementToArray
+jal AddElementToArray
+
+li $v0 4
+la $a0 lineBreak
+syscall
+
+# Call subroutine PrintArrayElements
+jal PrintArrayElements
+
+li $v0 4
+la $a0 lineBreak
+syscall
+
+# Call subroutine PrintPrimeNumbers
+jal PrintPrimeNumbers
+
+li $v0 4
+la $a0 lineBreak
+syscall
+
+# Call subroutine FindMax
+jal FindMax
+
+li $v0 4
+la $a0 lineBreak
+syscall
+
+# Call subroutine CalculateAverage
+jal CalculateAverage
+
+# Exit main function
+li $v0, 10
+syscall
+
+
+
+# Question 1: AddElementToArray Sub-routine
+AddElementToArray:
+addi $sp, $sp, -8 # Khai bao kich thuoc stack là 8 bytes
+sw $ra, ($sp) # luu backup gia tri cua return address vao vi tri cua $sp
+sw $t0, 4($sp)
+
+# Init index $t0 = 0
+li $t0 0
+AddElementToArray.LOOP:
+li $v0 4
+la $a0 inputArrayElementOpen
+syscall
+
+li $v0 1
+move $a0 $t0
+syscall
+
+li $v0 4
+la $a0 inputArrayElementClose
+syscall
+
+li $v0, 5
+syscall
+
+# Store content of $v0 into intArray[i]
+sll $t1 $t0 2
+add $t1 $s1 $t1
+sw $v0 ($t1)
+
+# ++i
+addi $t0 $t0 1 
+
+blt $t0 $a1 AddElementToArray.LOOP
+
+# khoi phuc cac thanh ghi / restore registers
+lw $ra, ($sp)
+lw $t0, 4($sp)
+# xoa stack / delete stack
+addi $sp, $sp, 8
+jr $ra
+
+
+
+# Question 2: PrintArrayElements Sub-routine
+PrintArrayElements:
+addi $sp, $sp, -8 # Khai bao kich thuoc stack là 8 bytes
+sw $ra, ($sp) # luu backup gia tri cua return address vao vi tri cua $sp
+sw $t0, 4($sp)
+
+li $v0 4
+la $a0 printArrayElementOpen
+syscall
+
+# Init $t0 = 0 as an index 
+li $t0 0
+PrintArrayElements.LOOP:
+
+li $v0 1
+# Load content of $t1 = intArray[i] to $v0
+sll $t1 $t0 2
+add $t1 $s1 $t1
+lw $a0 ($t1)
+syscall
+
+li $v0 4
+la $a0 whiteSpace
+syscall
+
+# ++i
+addi $t0 $t0 1 
+
+blt $t0 $a1 PrintArrayElements.LOOP
+
+li $v0 4
+la $a0 printArrayElementClose
+syscall
+
+# khoi phuc cac thanh ghi / restore registers
+lw $ra, ($sp)
+lw $t0, 4($sp)
+# xoa stack / delete stack
+addi $sp, $sp, 8
+jr $ra
+
+
+# Question 3: PrintPrimeNumbers Sub-routine
+PrintPrimeNumbers:
+addi $sp, $sp, -8 # Khai bao kich thuoc stack là 8 bytes
+sw $ra, ($sp) # luu backup gia tri cua return address vao vi tri cua $sp
+sw $t0, 4($sp)
+
+li $v0 4
+la $a0 printPrimeNumbersOpen
+syscall
+
+# Init $t0 = 0 as an index 
+li $t0 0
+PrintPrimeNumbers.LOOP:
+
+li $v0 1
+# Load content of intArray[i] ($t1)
+sll $t1 $t0 2
+add $t1 $s1 $t1
+lw $t1 ($t1)
+
+move $a2 $t1
+jal PrintPrimeNumbers.SelectPrimeNumber
+
+# ++i
+addi $t0 $t0 1 
+
+blt $t0 $a1 PrintPrimeNumbers.LOOP
+
+li $v0 4
+la $a0 printArrayElementClose
+syscall
+
+# khoi phuc cac thanh ghi / restore registers
+lw $ra, ($sp)
+lw $t0, 4($sp)
+# xoa stack / delete stack
+addi $sp, $sp, 8
+jr $ra
+
+# Question 3.1: PrintPrimeNumbers.SelectPrimeNumber Sub-routine
+PrintPrimeNumbers.SelectPrimeNumber:
+addi $sp, $sp, -12 # Khai bao kich thuoc stack là 12 bytes
+sw $ra, ($sp) # luu backup gia tri cua return address vao vi tri cua $sp
+sw $t0, 4($sp)
+sw $t2, 8($sp)
+
+# Tinh toan gia tri N/2  / Calculate value of N/2
+li $t0 2
+# Neu N == 2 / if N == 2
+beq $a2 $t0 PrintPrimeNumbers.SelectPrimeNumber.EXIT_LOOP
+div $a2 $t0
+# Luu gia tri N/2 vao $s1 / Store value of N/2 into $t2
+mflo $t2
+
+PrintPrimeNumbers.SelectPrimeNumber.LOOP:
+# Tinh modulus cua N ($s0) % i ($t0) / Calculate N % i
+div $a2 $t0
+mfhi $t1
+
+beq $t1 $zero PrintPrimeNumbers.SelectPrimeNumber.IF_MODULUS_ZERO
+addi $t0 $t0 1
+li $t1 0
+# Kiem tra i <= N/2  / Check if i <= N/2
+ble $t0 $t2 PrintPrimeNumbers.SelectPrimeNumber.LOOP
+j PrintPrimeNumbers.SelectPrimeNumber.EXIT_LOOP
+
+PrintPrimeNumbers.SelectPrimeNumber.IF_MODULUS_ZERO:
+li $s2 1
+j PrintPrimeNumbers.SelectPrimeNumber.EXIT_LOOP
+
+PrintPrimeNumbers.SelectPrimeNumber.EXIT_LOOP:
+# Chuan bi xuat thong bao cuoi cung / Prepare to print if N were a prime number or not
+
+beq $s2 $zero PrintPrimeNumbers.SelectPrimeNumber.PRINT_PRIME_NUMBER
+j PrintPrimeNumbers.SelectPrimeNumber.PRINT_NOT_PRIME_NUMBER
+
+PrintPrimeNumbers.SelectPrimeNumber.PRINT_NOT_PRIME_NUMBER:
+j PrintPrimeNumbers.SelectPrimeNumber.END_PROGRAM
+
+PrintPrimeNumbers.SelectPrimeNumber.PRINT_PRIME_NUMBER:
+li $v0 1
+move $a0 $a2
+syscall
+
+li $v0 4
+la $a0 whiteSpace
+syscall
+
+PrintPrimeNumbers.SelectPrimeNumber.END_PROGRAM:
+li $s2 0
+
+# khoi phuc cac thanh ghi / restore registers
+lw $ra, ($sp)
+lw $t0, 4($sp)
+lw $t2, 8($sp)
+# xoa stack / delete stack
+addi $sp, $sp, 12
+jr $ra
+
+# Question 4: FindMax Sub-routine
+FindMax:
+addi $sp, $sp, -20 # Khai bao kich thuoc stack là 20 bytes
+sw $ra, ($sp) # luu backup gia tri cua return address vao vi tri cua $sp
+sw $t0, 4($sp)
+sw $t2, 8($sp)
+sw $t3, 12($sp)
+sw $t4, 16($sp)
+
+# Init $t0 = 0 as an index 
+li $t0 0
+
+# Assign intArray[0] to max value ($t2) as an init value
+sll $t1 $t0 2
+add $t1 $s1 $t1
+lw $t2 ($t1)
+FindMax.LOOP:
+
+# Load content of $t1 = intArray[i]
+sll $t1 $t0 2
+add $t1 $s1 $t1
+lw $t1 ($t1)
+
+bgt $t1 $t2 FindMax.NEW_MAX
+j FindMax.CONTINUE
+
+FindMax.NEW_MAX:
+move $t2 $t1
+
+# ++i
+FindMax.CONTINUE:
+addi $t0 $t0 1 
+
+blt $t0 $a1 FindMax.LOOP
+
+li $v0 4
+la $a0 printMax
+syscall
+
+li $v0 1
+move $a0 $t2
+syscall
+
+# khoi phuc cac thanh ghi / restore registers
+lw $ra, ($sp)
+lw $t0, 4($sp)
+sw $t2, 8($sp)
+# xoa stack / delete stack
+addi $sp, $sp, 12
+jr $ra
+
+
+# Question 5: CalculateAverage Sub-routine
+CalculateAverage:
+addi $sp, $sp, -12 # Khai bao kich thuoc stack là 12 bytes
+sw $ra, ($sp) # luu backup gia tri cua return address vao vi tri cua $sp
+sw $t0, 4($sp)
+sw $t2, 8($sp)
+
+
+# Init $t0 = 0 as an index 
+li $t0 0
+
+# Init $t2 = 0 as sum
+li $t2 0
+CalculateAverage.LOOP:
+
+# Load content of $t1 = intArray[i] to $v0
+sll $t1 $t0 2
+add $t1 $s1 $t1
+lw $t1 ($t1)
+
+add $t2 $t2 $t1
+
+# ++i
+addi $t0 $t0 1 
+
+blt $t0 $a1 CalculateAverage.LOOP
+
+li $v0 4
+la $a0 lineBreak
+syscall
+
+li $v0 4
+la $a0 printAverage
+syscall
+
+div $t2 $a1
+mflo $t3
+mfhi $t4
+
+li $v0 1
+move $a0 $t3
+syscall
+
+beq $t4 $zero CalculateAverage.END_PROGRAM
+
+li $v0 4
+la $a0 plusSign
+syscall
+
+li $v0 1
+move $a0 $t4
+syscall
+
+li $v0 4
+la $a0 divideSign
+syscall
+
+li $v0 1
+move $a0 $a1
+syscall
+
+CalculateAverage.END_PROGRAM:
+
+# khoi phuc cac thanh ghi / restore registers
+lw $ra, ($sp)
+lw $t0, 4($sp)
+lw $t2, 8($sp)
+lw $t3, 12($sp)
+lw $t4, 16($sp)
+# xoa stack / delete stack
+addi $sp, $sp, 20
+jr $ra
